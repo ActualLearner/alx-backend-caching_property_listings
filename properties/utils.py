@@ -1,12 +1,16 @@
+import logging
 from django.core.cache import cache
 from django_redis import get_redis_connection
 from .models import Property
+
+# Get a logger instance for this module
+logger = logging.getLogger(__name__)
 
 
 def get_all_properties():
     """
     Retrieves the queryset of all properties, utilizing the cache.
-    (This function remains unchanged from the previous step)
+    (This function remains unchanged)
     """
     cache_key = "all_properties"
     queryset = cache.get(cache_key)
@@ -20,39 +24,32 @@ def get_redis_cache_metrics():
     """
     Connects to Redis to retrieve and analyze cache hit/miss statistics.
 
-    This function gets a raw connection to the Redis client, fetches the server
-    statistics using the INFO command, and calculates the cache hit ratio.
+    This function gets a raw connection to the Redis client, fetches server
+    statistics, calculates the cache hit ratio, and logs the metrics
+    using logger.error as required.
 
     Returns:
         A dictionary containing the number of hits, misses, and the calculated
-        hit ratio as a percentage.
+        hit ratio.
     """
-    # Use the django_redis utility to get the raw redis-py client
     redis_conn = get_redis_connection("default")
-
-    # The .info() command returns a dictionary of all Redis server stats
     info = redis_conn.info()
 
-    # Extract the relevant keyspace statistics, defaulting to 0 if not present
     hits = info.get("keyspace_hits", 0)
     misses = info.get("keyspace_misses", 0)
 
     total_requests = hits + misses
 
-    # Calculate the hit ratio, handling the division-by-zero case
-    if total_requests > 0:
-        # We multiply by 100 to get a percentage
-        hit_ratio = (hits / total_requests) * 100
-    else:
-        hit_ratio = 0.0
+    # Calculate the hit ratio using the specified one-line conditional expression.
+    hit_ratio = (hits / total_requests * 100) if total_requests > 0 else 0
 
-    # Log the metrics to the console for easy analysis during development
-    print("--- Redis Cache Metrics ---")
-    print(f"  Cache Hits:   {hits}")
-    print(f"  Cache Misses: {misses}")
-    print(f"  Total Lookups: {total_requests}")
-    print(f"  Hit Ratio:    {hit_ratio:.2f}%")
-    print("---------------------------")
+    # Log metrics using logger.error as strictly required.
+    logger.error("--- Redis Cache Metrics ---")
+    logger.error(f"  Cache Hits:   {hits}")
+    logger.error(f"  Cache Misses: {misses}")
+    logger.error(f"  Total Lookups: {total_requests}")
+    logger.error(f"  Hit Ratio:    {hit_ratio:.2f}%")
+    logger.error("---------------------------")
 
     metrics_dict = {"hits": hits, "misses": misses, "hit_ratio": hit_ratio}
 
