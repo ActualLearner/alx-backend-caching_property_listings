@@ -20,4 +20,4 @@ def property_list(request):
 
     # Return the data as a JSON response.
     # safe=False is required to allow a list to be the top-level object.
-    return JsonResponse(data, safe=False)
+    return JsonResponse({"properties": data})```
